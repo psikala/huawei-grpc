@@ -1,0 +1,15 @@
+syntax = "proto3";
+package huawei_dialout;
+
+service gRPCDataservice {
+    rpc dataPublish(stream serviceArgs) returns(stream serviceArgs) {};
+}
+
+message serviceArgs {
+    int64 ReqId = 1;
+    oneof MessageData {
+        bytes data = 2;         //当存在该字段时，表示内容为gpb编码
+        string data_json = 4;   //当存在该字段时，表示内容为json字符串
+    }
+    string errors = 3;
+}

@@ -1,0 +1,88 @@
+syntax = "proto3";
+package telemetry;
+
+message Telemetry {
+  string node_id_str = 1;   //0x0a 设备名
+
+  string   subscription_id_str = 2;   //0x12
+  
+  string   sensor_path = 3;    //0x1a 自定义事件path："huawei-telemetry:telemetrySelfDefinedEvent"为固定值；非自定义事件path:app path
+  
+  string   proto_path = 13;     // 采样路径path对应的proto path
+
+  uint64   collection_id = 4;  //0x20
+
+  uint64   collection_start_time = 5;  //0x28
+  
+  // 生成这个Telemetry的message数据的时间戳
+  uint64   msg_timestamp = 6;  //0x30
+
+
+  TelemetryGPBTable data_gpb = 7;  //0x3a 数据编码为GPB时有效，否则为空
+
+  uint64 collection_end_time = 8;  //0x40
+  
+  //采样精度：ms（毫秒）
+  uint32   current_period = 9;
+  //异常描述信息，采样异常时用于上报异常信息
+  string   except_desc = 10;
+  
+  string   product_name = 11; // 产品形态名
+  
+  enum Encoding {
+    Encoding_GPB = 0;
+    Encoding_JSON = 1;
+  };
+  
+  Encoding   encoding =12;    // 数据编码。为GPB时，data_gpb字段有效，否则时data_str字段有效
+  
+  string   data_str = 14;   // 数据编码非GPB时有效，否则为空
+
+}
+
+//多份实例数据
+message TelemetryGPBTable {
+  repeated TelemetryRowGPB row = 1;   //0x0a
+}
+
+message TelemetryRowGPB {
+  //每个实例数据对应的采集时间戳
+  uint64 timestamp = 1;   //0x08
+
+  //GPB编码后的一份实例数据
+  bytes content = 11;   //0x5a
+}
+
+message TelemetrySelfDefinedEvent {
+  string path = 1;         // 触发自定义事件的采样路径，描述content的解析方法
+  string proto_path = 13;   // 采样路径path对应的proto path
+  uint32 level = 2;         // 自定义事件的级别
+  string description = 3;  // 自定义事件的描述信息
+  string fieldName = 4;    // 触发自定义事件的字段名称
+  uint32 fieldValue = 5;   // 触发自定义事件时该字段的取值
+  TelemetrySelfDefineThresTable data_threshold = 6;  // 触发自定义事件时阈值过滤条件
+  enum ThresholdRelation {
+        ThresholdRelation_INVALID = 0; /* 未配置Threshold间关系 */
+		ThresholdRelation_AND = 1; /* and */
+		ThresholdRelation_OR = 2; /* or */
+		}
+  ThresholdRelation thresholdRelation = 7;   // 触发自定义事件时多个阈值过滤条件间关系 
+  bytes content = 8;       // 触发自定义事件的采样数据内容
+}
+
+//多份实例数据
+message TelemetrySelfDefineThresTable {
+  repeated TelemetryThreshold row = 1;   
+}
+
+message TelemetryThreshold {
+  uint32 thresholdValue = 1;  //配置下发的thresholdValue
+  enum ThresholdOpType {
+        ThresholdOpType_EQ = 0; /* 上送数据fieldValue与配置数据thresholdValue间的大小关系，相等 */
+        ThresholdOpType_GT = 1; /* fieldValue大于thresholdValue */
+		ThresholdOpType_GE = 2; /* fieldValue大于等于thresholdValue */
+		ThresholdOpType_LT = 3; /* fieldValue小于thresholdValue */
+		ThresholdOpType_LE = 4; /* fieldValue小于等于thresholdValue */
+		}
+  ThresholdOpType thresholdOpType = 2;
+}
